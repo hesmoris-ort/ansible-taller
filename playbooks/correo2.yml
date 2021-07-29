@@ -1,9 +1,10 @@
 ---
-- hosts: correo
+- hosts: mailserver
   remote_user: admin
   become: yes
+  become_method: sudo
   vars_files:
-  - "./variables.yml"
+  - "./vars/variables.yml"
 
   tasks:
 #Puedo incluir variables usando el módulo include_vars
@@ -11,48 +12,48 @@
 #    include_vars:
 #      file: variables.yml
 
-  - name: Epel repo is installed
+  - name: Epel repo estan instalados
     yum:
       name: epel-release
       state: present 
 
-  - name: Install packages
+  - name: Instalar paquetes
     yum:
       name: "{{ packages}}"
       state: latest
 
-  - name: write postfix config file
+  - name: Escribiendo configuracion postfix
     template:
       src: ./templates/postfix-main.j2
       dest: /etc/postfix/main.cf
     notify:
     - restart postfix
 
-  - name: ensure postfix is running
+  - name: Asegurarse de que postfix esta corriendo
     service:
       name: postfix
       state: started
       enabled: yes
       
-  - name: enable imap in dovecot
+  - name: Habilitar imap en dovecot
     lineinfile:
       path: /etc/dovecot/dovecot.conf
       line: 'protocols= imap pop3 lmtp'
 
-  - name: copy dovecot mail configuration
+  - name: Copiar configuracion de mail en dovecot
     copy: 
       src: ./10-mail.conf
       dest: /etc/dovecot/conf.d/10-mail.conf
     notify: 
     - restart dovecot
 
-   - name: Dovecot running and enabled
+   - name: Dovecot corriendo y habilitado
     service:
       name: dovecot
       state: started
       enabled: true
 
-  - name: Configure squirrelmail
+  - name: Configurar squirrelmail
     template:
       src: ./squirrelmail.conf.j2
       dest: /etc/squirrelmail/config.php
@@ -60,13 +61,13 @@
       group: root
       mode: 0640
 
-  - name: Apache running and enabled
+  - name: Apache corriendo y habilitado
     service:
       name: httpd
       state: started
       enabled: true
       
-  - name: open firewall ports       
+  - name: puertos abiertos en firewall       
     firewalld:
       service: "{{item}}"
       state: enabled
@@ -78,13 +79,13 @@
     - http
 
   handlers: 
-  - name: Restart postfix
+  - name: Reiniciar postfix
     service:
       name: postfix
       state: restarted
       enabled: yes 
 
-  - name: Restart dovecot
+  - name: Reiniciar dovecot
     service:
       name: dovecot
       state: restarted
