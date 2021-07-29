@@ -23,7 +23,7 @@
 
   - name: write postfix config file
     template:
-      src: ./postfix-main.j2
+      src: ./templates/postfix-main.j2
       dest: /etc/postfix/main.cf
     notify:
     - restart postfix
